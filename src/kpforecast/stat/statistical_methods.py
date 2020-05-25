@@ -17,7 +17,7 @@ class Statistical():
     """
 
     @staticmethod
-    def naive_f(series, n_periods):
+    def naive_f(series, n_periods=1):
         """naive forecasting for n periods
         Args:
             series(pandas data frame) -- time series to perform forecast
@@ -85,7 +85,7 @@ class Statistical():
         if n_periods < 1:
             raise Exception("n_periods must be greater than 1. Currently {}".format(n_periods))
         model = sm.tsa.SimpleExpSmoothing(series)
-        model_fit = model.fit()
+        model_fit = model.fit(smoothing_levelfloat=alpha)
         return model_fit.predict(1,len(series) + (n_periods)), model_fit.params['smoothing_level']
 
     @staticmethod
@@ -122,11 +122,11 @@ class Statistical():
                 else:
                     result.append(level + (trend * (n - len(series))))
         forecast_dates = Utilities.find_next_forecastdates(series, n_periods)
-        expS1.append(forecast_date)
+        expS1.extend(forecast_dates)
         return pd.Series(result, index=expS1)
 
     @staticmethod
-    def holt_winters_f(series, slen, alpha, beta, gamma, n_preds):
+    def holt_winters_f(series, slen, alpha, beta, gamma, n_periods=1):
         """ holt winters additive seasonal forecast
         returns fully smoothed exponential forecast
         TODO
@@ -135,7 +135,7 @@ class Statistical():
         expS1 = list(series.index)
         result = []
         seasonals = Utilities.initial_seasonal_components(series, slen)
-        for i in range(len(series) + n_preds):
+        for i in range(len(series) + n_periods):
             if i == 0:
                 smooth = series[0]
                 trend = Utilities.initial_trend(series, slen)
@@ -152,11 +152,11 @@ class Statistical():
                     1 - gamma) * seasonals[i % slen]
                 result.append(smooth + trend + seasonals[i % slen])
         forecast_dates = Utilities.find_next_forecastdates(series, n_periods)
-        expS1.append(forecast_date)
+        expS1.extend(forecast_dates)
         return pd.Series(result, index=expS1)
 
     @staticmethod
-    def theta_f(series, n_periods=1):
+    def theta_f(series, alpha=None, n_periods=1):
         """ Original Theta forecast, as described by A&N.
 
         Args:
@@ -164,6 +164,8 @@ class Statistical():
             - n_periods(int): number of periods to forecast
         Notes: When Alpha = 0.0, actually return 0.2 as according to the R forecasting library
         """
+        if isinstance(series, np.ndarray):
+            series = pd.Series(series)
         is_seasonal, inferred_freq = Utilities.check_seasonality(series)
         if is_seasonal:
             series_copy = series.copy(deep=True)
@@ -171,7 +173,7 @@ class Statistical():
             seasonal = decomposition.seasonal
             series = decomposition.trend + decomposition.resid
         n = len(series)
-        forc, alpha = Statistical.ses_f(series, alpha, n_periods)
+        forc, alpha = Statistical.ses_f(series, alpha=alpha, n_periods=n_periods)
         if not alpha:
             alpha = 0.2
         ts_vals = series.to_numpy()

@@ -15,8 +15,41 @@ from statsmodels.tsa.stattools import acf
 
 from pandas.core.nanops import nanmean as pd_nanmean
 from statsmodels.tsa.seasonal import DecomposeResult
-from statsmodels.tsa.filters._utils import _maybe_get_pandas_wrapper_freq
 import statsmodels.api as sm
+
+def _is_using_pandas(endog, exog):
+    # TODO: Remove WidePanel when finished with it
+    klasses = (pd.Series, pd.DataFrame, pd.WidePanel, pd.Panel)
+    return (isinstance(endog, klasses) or isinstance(exog, klasses))
+
+def _get_pandas_wrapper(X, trim_head=None, trim_tail=None, names=None):
+    index = X.index
+    #TODO: allow use index labels
+    if trim_head is None and trim_tail is None:
+        index = index
+    elif trim_tail is None:
+        index = index[trim_head:]
+    elif trim_head is None:
+        index = index[:-trim_tail]
+    else:
+        index = index[trim_head:-trim_tail]
+    if hasattr(X, "columns"):
+        if names is None:
+            names = X.columns
+        return lambda x : X.__class__(x, index=index, columns=names)
+    else:
+        if names is None:
+            names = X.name
+        return lambda x : X.__class__(x, index=index, name=names)
+
+def _maybe_get_pandas_wrapper_freq(X, trim=None):
+    if _is_using_pandas(X, None):
+        index = X.index
+        func = _get_pandas_wrapper(X, trim)
+        freq = index.inferred_freq
+        return func, freq
+    else:
+        return lambda x : x, None
 
 
 class Utilities:
