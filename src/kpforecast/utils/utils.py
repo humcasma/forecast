@@ -18,8 +18,7 @@ from statsmodels.tsa.seasonal import DecomposeResult
 import statsmodels.api as sm
 
 def _is_using_pandas(endog, exog):
-    # TODO: Remove WidePanel when finished with it
-    klasses = (pd.Series, pd.DataFrame, pd.WidePanel, pd.Panel)
+    klasses = (pd.Series, pd.DataFrame)
     return (isinstance(endog, klasses) or isinstance(exog, klasses))
 
 def _get_pandas_wrapper(X, trim_head=None, trim_tail=None, names=None):
