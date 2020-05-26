@@ -85,7 +85,7 @@ class Statistical():
         if n_periods < 1:
             raise Exception("n_periods must be greater than 1. Currently {}".format(n_periods))
         model = sm.tsa.SimpleExpSmoothing(series)
-        model_fit = model.fit(smoothing_levelfloat=alpha)
+        model_fit = model.fit(smoothing_level=alpha)
         return model_fit.predict(1,len(series) + (n_periods)), model_fit.params['smoothing_level']
 
     @staticmethod
