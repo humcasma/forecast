@@ -180,7 +180,7 @@ class Utilities:
                              trend=results[1],
                              resid=results[2],
                              observed=results[3],
-                             period_averages=period_averages)
+                             ) #period_averages=period_averages)
         return dr
 
     @staticmethod
